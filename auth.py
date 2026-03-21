@@ -4,7 +4,7 @@ class AuthSystem:
 
     def __init__(self,filename):
         self.filename = filename
-
+#TODO: upgrade password hashing to bcrypt
     def hash_password(self,password):
         hashed = hashlib.md5(password.encode()).hexdigest()
         return hashed
