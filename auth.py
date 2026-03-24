@@ -1,4 +1,4 @@
-import hashlib
+import bcrypt
 
 class AuthSystem:
 
@@ -6,12 +6,20 @@ class AuthSystem:
         self.filename = filename
 #TODO: upgrade password hashing to bcrypt
     def hash_password(self,password):
-        hashed = hashlib.md5(password.encode()).hexdigest()
-        return hashed
+        # convert password to bytes
+        password_bytes = password.encode()
 
+        # generate salt + hash
+        salt = bcrypt.gensalt()
+        hashed = bcrypt.hashpw(password_bytes, salt)
+
+        return hashed.decode()  # store as string
+    
+    def verify_password(self, password, stored_password):
+        return bcrypt.checkpw(password.encode(), stored_password.encode())
+    
     def register(self,username,password):
         try:
-
             with open(self.filename,"r") as file:
                 for line in file:
                     if ',' not in line:
@@ -23,21 +31,19 @@ class AuthSystem:
         except FileNotFoundError:
             pass
         hashed_password = self.hash_password(password)
+
         with open(self.filename,"a") as file:
             file.write(username + "," + hashed_password + "\n")
         print("User registered successfully")
 
-    def login(self,username,password):
-
-        hashed_password = self.hash_password(password)
-        
+    def login(self,username,password):        
         try:
             with open(self.filename,"r") as file:
                 for line in file:
                     if ',' not in line:
                         continue
                     stored_user,stored_password = line.strip().split(",")
-                    if stored_user == username and stored_password == hashed_password:
+                    if stored_user == username and self.verify_password(password, stored_password):
                         print("Login successfull")
                         return True
         except FileNotFoundError:
